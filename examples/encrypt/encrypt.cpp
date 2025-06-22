@@ -41,6 +41,8 @@ int main(int iArgc, char **pArgv)
 
 	std::cout << "'" << pArgv[1] << "'" << endl;
 
+	cout << Encrypt::opensslEncrypt(pArgv[1]) << endl;
+	/*
 	// for (long lIndex = 0; lIndex < 10000; lIndex++)
 	{
 		lBufferCryptedLength = Encrypt::getCryptedBufferLength(pArgv[1]);
@@ -69,6 +71,7 @@ int main(int iArgc, char **pArgv)
 
 		delete[] pBufferCrypted;
 	}
+	*/
 
 	return 0;
 }

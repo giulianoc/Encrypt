@@ -39,6 +39,8 @@ int main(int iArgc, char **pArgv)
 		return 1;
 	}
 
+	cout << Encrypt::opensslDecrypt(pArgv[1]) << endl;
+	/*
 	// for (long lIndex = 0; lIndex < 10000; lIndex++)
 	{
 		if ((lDecryptedBufferLength = Encrypt::getDecryptedBufferLength(pArgv[1])) < 0)
@@ -69,6 +71,7 @@ int main(int iArgc, char **pArgv)
 
 		delete[] pDecryptedBuffer;
 	}
+	*/
 
 	return 0;
 }
