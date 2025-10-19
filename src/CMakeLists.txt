@@ -28,7 +28,19 @@ SET (HEADERS
 	Encrypt.h
 )
 
+if(APPLE)
+  include_directories("${OPENSSL_INCLUDE_DIR}")
+endif()
+
+if(APPLE)
+  link_directories("${OPENSSL_LIB_DIR}")
+endif()
+
 add_library (Encrypt SHARED ${SOURCES} ${HEADERS})
+
+if(APPLE)
+    target_link_libraries(Encrypt crypto)
+endif()
 
 install (TARGETS Encrypt DESTINATION lib)
 install (FILES ${HEADERS} DESTINATION include)
