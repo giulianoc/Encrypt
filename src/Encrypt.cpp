@@ -23,8 +23,6 @@
 
 #include "Encrypt.h"
 
-#include "../../../../../../Users/giuliano/rsi/zorac-dev/deploy/spdlog/include/spdlog/spdlog.h"
-
 #include <algorithm>
 #include <assert.h>
 
