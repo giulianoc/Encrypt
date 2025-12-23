@@ -22,6 +22,9 @@
 */
 
 #include "Encrypt.h"
+
+#include "../../../../../../Users/giuliano/rsi/zorac-dev/deploy/spdlog/include/spdlog/spdlog.h"
+
 #include <algorithm>
 #include <assert.h>
 
@@ -1093,7 +1096,7 @@ long Encrypt::decrypt(const char *pCryptedBuffer, char *pDecryptedBuffer, unsign
 
 #include <iostream>
 #include <stdexcept>
-#include <string.h>
+#include <spdlog/spdlog.h>
 
 #include <openssl/conf.h>
 #include <openssl/err.h>
@@ -1355,7 +1358,7 @@ string Encrypt::opensslEncrypt(unsigned char *key, unsigned char *iv, string pla
 	// std::cout << "ciphertext_len: " << ciphertext_len << std::endl;
 	// for(int index =  0; index < ciphertext_len; index++)
 	// 	std::cout << "'" << ciphertext[index] << "'" << (int) (ciphertext[index]) << std::endl;
-	string base64Encoded = convertFromBinaryToBase64(ciphertext, ciphertext_len);
+	string base64Encoded = binaryToBase64(ciphertext, ciphertext_len);
 	// std::cout << "base64Encoded.size: " << base64Encoded.size() << std::endl;
 	// for(int index =  0; index < base64Encoded.size(); index++)
 	// 	std::cout << "'" << base64Encoded[index] << "'" << (int) (base64Encoded[index]) << std::endl;
@@ -1393,12 +1396,7 @@ string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, string bas
 	::replace(localBase64Encoded.begin(), localBase64Encoded.end(), '~', '/');
 	::replace(localBase64Encoded.begin(), localBase64Encoded.end(), '_', '=');
 
-	unsigned char *ciphertext;
-	size_t ciphertext_len;
-	if (convertFromBase64ToBinary(localBase64Encoded.c_str(), &ciphertext, &ciphertext_len) != 0)
-	{
-		throw runtime_error(string("base64Decode failed"));
-	}
+	vector<unsigned char> ciphertext = base64ToBinary(localBase64Encoded);
 	// std::cout << "ciphertext_len: " << ciphertext_len << std::endl;
 
 	unsigned char ucPlaintext[10240];
@@ -1409,10 +1407,9 @@ string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, string bas
 		int len;
 
 		/* Create and initialise the context */
-		if (!(ctx = EVP_CIPHER_CTX_new()))
+		if (!((ctx = EVP_CIPHER_CTX_new())))
 		{
-			free(ciphertext);
-
+			SPDLOG_ERROR("EVP_CIPHER_CTX_new failed");
 			throw runtime_error(string("EVP_CIPHER_CTX_new failed"));
 		}
 
@@ -1426,8 +1423,8 @@ string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, string bas
 		if (1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv))
 		{
 			EVP_CIPHER_CTX_free(ctx);
-			free(ciphertext);
 
+			SPDLOG_ERROR("EVP_DecryptInit_ex failed");
 			throw runtime_error(string("EVP_DecryptInit_ex failed"));
 		}
 
@@ -1435,11 +1432,11 @@ string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, string bas
 		 * Provide the message to be decrypted, and obtain the plaintext output.
 		 * EVP_DecryptUpdate can be called multiple times if necessary.
 		 */
-		if (1 != EVP_DecryptUpdate(ctx, ucPlaintext, &len, ciphertext, ciphertext_len))
+		if (1 != EVP_DecryptUpdate(ctx, ucPlaintext, &len, ciphertext.data(), ciphertext.size()))
 		{
 			EVP_CIPHER_CTX_free(ctx);
-			free(ciphertext);
 
+			SPDLOG_ERROR("EVP_DecryptUpdate failed");
 			throw runtime_error(string("EVP_DecryptUpdate failed"));
 		}
 		plaintext_len = len;
@@ -1451,8 +1448,8 @@ string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, string bas
 		if (1 != EVP_DecryptFinal_ex(ctx, ucPlaintext + len, &len))
 		{
 			EVP_CIPHER_CTX_free(ctx);
-			free(ciphertext);
 
+			SPDLOG_ERROR("EVP_DecryptFinal_ex failed");
 			throw runtime_error(string("EVP_DecryptFinal_ex failed"));
 		}
 		plaintext_len += len;
@@ -1461,78 +1458,89 @@ string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, string bas
 		EVP_CIPHER_CTX_free(ctx);
 	}
 
-	free(ciphertext);
-
-	string plainText((const char *)ucPlaintext, plaintext_len);
+	string plainText(reinterpret_cast<const char *>(ucPlaintext), plaintext_len);
 
 	return plainText;
 }
 
-string Encrypt::convertFromBinaryToBase64(const unsigned char *buffer, size_t length)
+string Encrypt::binaryToBase64(const unsigned char *buffer, const int length)
 {
 	// Encodes a binary safe base 64 string
 
-	BIO *bio, *b64;
-	BUF_MEM *bufferPtr;
+	/*
+	Un BIO (Basic I/O) in OpenSSL è un oggetto che rappresenta:
+	•	una sorgente/destinazione di dati (file, socket, memoria)
+	•	oppure un filtro che trasforma i dati (base64, gzip, cipher, ecc.)
+	Una catena BIO è una pipeline di BIO collegati in serie, dove:
+	•	i dati entrano dal BIO in cima
+	•	attraversano uno o più filtri
+	•	finiscono in un BIO di destinazione
+	È concettualmente identico a: cat file | base64 | gzip > out
+	Esempi di BIO di sorgente/destinazione (sink/source), non trasformano i dati, li leggono o scrivono:
+	•	BIO_s_mem() → buffer in memoria
+	•	BIO_s_file() → file
+	•	BIO_s_socket() → socket
+	Esempi di BIO filtro, trasformano i dati e li passano al BIO sottostante:
+	•	BIO_f_base64() → encode/decode base64
+	•	BIO_f_cipher() → cifratura
+	•	BIO_f_md() → digest
+	•	BIO_f_buffer() → buffering
+	*/
 
-	// _logger->info(__FILEREF__ + "BIO_new...");
-	b64 = BIO_new(BIO_f_base64());
-	bio = BIO_new(BIO_s_mem());
+	// Come funziona una catena, esempio classico: encode base64 in memoria
+	BIO *b64 = BIO_new(BIO_f_base64());	// filtro
+	BIO *bmem = BIO_new(BIO_s_mem());		// destinazione
 
-	// _logger->info(__FILEREF__ + "BIO_push...");
-	bio = BIO_push(b64, bio);
-	// Do not use newlines to flush buffer
+	// By default there must be a newline at the end of input.
+	// Next flag remove new line at the end
 	// (see https://www.openssl.org/docs/man1.1.1/man3/BIO_f_base64.html)
-	BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+	// Le flag sono specifiche del BIO che le usa, quindi b64, è il filtro base64 che decide se inserire \n
+	BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
 
-	// _logger->info(__FILEREF__ + "BIO_write...");
-	BIO_write(bio, buffer, length);
-	BIO_flush(bio);
-	BIO_get_mem_ptr(bio, &bufferPtr);
+	// BIO *BIO_push(BIO *filter, BIO *next); ritorna il BIO in cima alla catena, cioè filter
+	BIO *top = BIO_push(b64, bmem);			// b64 -> bmem, la catena è: [b64 filter] → [memory BIO]
 
-	// _logger->info(__FILEREF__ + "BIO_set_close...");
-	BIO_set_close(bio, BIO_NOCLOSE);
-	// _logger->info(__FILEREF__ + "BIO_free_all...");
-	BIO_free_all(bio);
-	// _logger->info(__FILEREF__ + "BIO_free...");
-	// BIO_free(b64);   // useless because of BIO_free_all
+	// Quando si fa: BIO_write
+	// 1.	b64 riceve i dati
+	// 2.	li codifica in base64
+	// 3.	li passa al BIO sottostante (bmem)
+	// 4.	bmem li scrive nel buffer
+	// Si scrive e si legge sempre dal BIO in cima alla catena, OpenSSL si occupa di:
+	// - far passare i dati attraverso i filtri
+	// - inviarli alla destinazione finale
+	BIO_write(top, buffer, length);
+	BIO_flush(top);
 
-	// _logger->info(__FILEREF__ + "base64Text set...");
-	// string base64Encoded; // = string(bufferPtr->data);
-	string base64Encoded = string(bufferPtr->data, bufferPtr->length);
+	// Per leggere il risultato non si legge dal filtro, ma dal sink, Motivo:
+	// il filtro non conserva dati
+	// la destinazione sì
+	// Inoltre: bufferPtr NON viene allocato da me
+	// - è di proprietà del BIO memoria (BIO_s_mem)
+	// - OpenSSL continua a gestirne il ciclo di vita
+	// Documentazione OpenSSL: The BUF_MEM structure is owned by the BIO and must not be freed by the caller
+	BUF_MEM *bufferPtr;
+	BIO_get_mem_ptr(bmem, &bufferPtr);
+	string base64Encoded(bufferPtr->data, bufferPtr->length);
 
-	BUF_MEM_free(bufferPtr);
-
-	// _logger->info(__FILEREF__ + "signature: " + signature);
+	// Libera:
+	// il BIO top
+	// tutti quelli sotto
+	BIO_free_all(top);
 
 	return base64Encoded;
 }
 
-size_t Encrypt::calcBinaryLength(const char *b64input)
-{
-	// Calculates the length of a base64 decoded string
-
-	size_t len = strlen(b64input);
-	size_t padding = 0;
-
-	if (b64input[len - 1] == '=' && b64input[len - 2] == '=') // last two chars are =
-		padding = 2;
-	else if (b64input[len - 1] == '=') // last char is =
-		padding = 1;
-
-	return (len * 3) / 4 - padding;
-}
-
+/*
 int Encrypt::convertFromBase64ToBinary(const char *b64message, unsigned char **buffer, size_t *length)
-{ // Decodes a base64 encoded string
-	BIO *bio, *b64;
+{
+	// Decodes a base64 encoded string
 
 	int decodeLen = calcBinaryLength(b64message);
 	*buffer = (unsigned char *)malloc(decodeLen + 1);
 	(*buffer)[decodeLen] = '\0';
 
-	bio = BIO_new_mem_buf(b64message, -1);
-	b64 = BIO_new(BIO_f_base64());
+	BIO *bio = BIO_new_mem_buf(b64message, -1);
+	BIO *b64 = BIO_new(BIO_f_base64());
 	bio = BIO_push(b64, bio);
 
 	// Do not use newlines to flush buffer
@@ -1550,4 +1558,33 @@ int Encrypt::convertFromBase64ToBinary(const char *b64message, unsigned char **b
 
 	return (0); // success
 }
+*/
+vector<unsigned char> Encrypt::base64ToBinary(const string& b64)
+{
+	// Decodes a base64 encoded string
+
+	// Per i metodi BIO, vedi commenti in Encrypt::convertFromBinaryToBase64
+
+	BIO *b64bio = BIO_new(BIO_f_base64());
+	BIO *bmem = BIO_new_mem_buf(b64.data(), b64.size());
+
+	BIO_set_flags(b64bio, BIO_FLAGS_BASE64_NO_NL);
+	BIO_push(b64bio, bmem);
+
+	vector<unsigned char> out((b64.size() * 3) / 4);
+
+	const int len = BIO_read(b64bio, out.data(), out.size());
+	if (len <= 0)
+	{
+		BIO_free_all(b64bio);
+		SPDLOG_ERROR("Base64 decode failed");
+		throw std::runtime_error("Base64 decode failed");
+	}
+
+	out.resize(len);
+	BIO_free_all(b64bio);
+
+	return out;
+}
+
 #endif

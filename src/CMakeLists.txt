@@ -28,6 +28,7 @@ SET (HEADERS
 	Encrypt.h
 )
 
+include_directories("${SPDLOG_INCLUDE_DIR}")
 if(APPLE)
   include_directories("${OPENSSL_INCLUDE_DIR}")
 endif()

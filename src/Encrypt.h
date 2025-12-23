@@ -21,8 +21,7 @@
  with the authors.
 */
 
-#ifndef Encrypt_h
-#define Encrypt_h
+#pragma once
 
 #ifdef WIN32
 #elif WIN32_OLD
@@ -266,6 +265,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(SimpleCrypt::CryptoFlags)
 
 #else
 #include <string>
+#include <vector>
 
 using namespace std;
 #endif
@@ -326,11 +326,6 @@ Return 0 if SUCCESS, != 0 if fails
 
 	static string opensslDecrypt(unsigned char *key, unsigned char *iv, string base64Encoded);
 
-	static string convertFromBinaryToBase64(const unsigned char *buffer, size_t length);
-
-	static size_t calcBinaryLength(const char *b64input);
-
-	static int convertFromBase64ToBinary(const char *b64message, unsigned char **buffer, size_t *length);
+	static string binaryToBase64(const unsigned char *buffer, int length);
+	static vector<unsigned char> base64ToBinary(const string& b64);
 };
-
-#endif
