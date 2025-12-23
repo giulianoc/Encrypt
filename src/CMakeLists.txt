@@ -29,9 +29,7 @@ SET (HEADERS
 )
 
 include_directories("${SPDLOG_INCLUDE_DIR}")
-if(APPLE)
-  include_directories("${OPENSSL_INCLUDE_DIR}")
-endif()
+include_directories("${OPENSSL_INCLUDE_DIR}")
 
 if(APPLE)
   link_directories("${OPENSSL_LIB_DIR}")
