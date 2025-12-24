@@ -1588,7 +1588,7 @@ vector<unsigned char> Encrypt::base64ToBinary(const string& b64)
 	return out;
 }
 
-std::array<unsigned char, EVP_MAX_MD_SIZE> Encrypt::md5(const string& input, unsigned int& outLen)
+vector<unsigned char> Encrypt::md5(const string& input, unsigned int& outLen)
 {
 	EVP_MD_CTX* ctx = EVP_MD_CTX_new();
 	if (!ctx)
@@ -1606,7 +1606,8 @@ std::array<unsigned char, EVP_MAX_MD_SIZE> Encrypt::md5(const string& input, uns
 		throw std::runtime_error("EVP_Digest failed");
 	}
 
-	std::array<unsigned char, EVP_MAX_MD_SIZE> digest;
+		SPDLOG_ERROR("EVP_Digest outLen: {}", outLen);
+	vector<unsigned char> digest(EVP_MAX_MD_SIZE);
 
 	if (EVP_DigestFinal_ex(ctx, digest.data(), &outLen) != 1)
 	{
