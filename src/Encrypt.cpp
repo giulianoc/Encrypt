@@ -1600,13 +1600,19 @@ vector<unsigned char> Encrypt::md5(const string& input, unsigned int& outLen)
 
 	SPDLOG_ERROR("EVP_DigestInit_ex");
 	if (EVP_DigestInit_ex(ctx, EVP_md5(), nullptr) != 1 ||
-		EVP_DigestUpdate(ctx, input.data(), input.size()) != 1 ||
-		EVP_DigestFinal_ex(ctx, nullptr, &outLen) != 1)
+		EVP_DigestUpdate(ctx, input.data(), input.size()) != 1)
 	{
 		EVP_MD_CTX_free(ctx);
 		SPDLOG_ERROR("EVP_Digest failed");
 		throw std::runtime_error("EVP_Digest failed");
 	}
+
+	SPDLOG_ERROR("EVP_MD_CTX_get0_md");
+	const EVP_MD* md = EVP_MD_CTX_get0_md(ctx);
+	SPDLOG_ERROR("EVP_MD_size");
+	outLen = EVP_MD_size(md);
+
+	// outLen = EVP_MD_size(EVP_md5());  // MD5 = 16 bytes
 
 		SPDLOG_ERROR("EVP_Digest outLen: {}", outLen);
 	vector<unsigned char> digest(EVP_MAX_MD_SIZE);
