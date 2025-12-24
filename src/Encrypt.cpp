@@ -1590,6 +1590,7 @@ vector<unsigned char> Encrypt::base64ToBinary(const string& b64)
 
 vector<unsigned char> Encrypt::md5(const string& input, unsigned int& outLen)
 {
+	SPDLOG_ERROR("EVP_MD_CTX_new");
 	EVP_MD_CTX* ctx = EVP_MD_CTX_new();
 	if (!ctx)
 	{
@@ -1597,6 +1598,7 @@ vector<unsigned char> Encrypt::md5(const string& input, unsigned int& outLen)
 		throw std::runtime_error("EVP_MD_CTX_new failed");
 	}
 
+	SPDLOG_ERROR("EVP_DigestInit_ex");
 	if (EVP_DigestInit_ex(ctx, EVP_md5(), nullptr) != 1 ||
 		EVP_DigestUpdate(ctx, input.data(), input.size()) != 1 ||
 		EVP_DigestFinal_ex(ctx, nullptr, &outLen) != 1)
