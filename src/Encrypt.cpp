@@ -1099,6 +1099,9 @@ long Encrypt::decrypt(const char *pCryptedBuffer, char *pDecryptedBuffer, unsign
 #include <openssl/conf.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <array>
+#include <stdexcept>
+
 
 long Encrypt::getDecryptedBufferLength(const char *pCryptedBuffer) { return strlen(pCryptedBuffer) / 2; }
 
@@ -1583,6 +1586,37 @@ vector<unsigned char> Encrypt::base64ToBinary(const string& b64)
 	BIO_free_all(b64bio);
 
 	return out;
+}
+
+std::array<unsigned char, EVP_MAX_MD_SIZE> Encrypt::md5(const string& input, unsigned int& outLen)
+{
+	EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+	if (!ctx)
+	{
+		SPDLOG_ERROR("EVP_MD_CTX_new failed");
+		throw std::runtime_error("EVP_MD_CTX_new failed");
+	}
+
+	if (EVP_DigestInit_ex(ctx, EVP_md5(), nullptr) != 1 ||
+		EVP_DigestUpdate(ctx, input.data(), input.size()) != 1 ||
+		EVP_DigestFinal_ex(ctx, nullptr, &outLen) != 1)
+	{
+		EVP_MD_CTX_free(ctx);
+		SPDLOG_ERROR("EVP_Digest failed");
+		throw std::runtime_error("EVP_Digest failed");
+	}
+
+	std::array<unsigned char, EVP_MAX_MD_SIZE> digest;
+
+	if (EVP_DigestFinal_ex(ctx, digest.data(), &outLen) != 1)
+	{
+		EVP_MD_CTX_free(ctx);
+		SPDLOG_ERROR("EVP_DigestFinal_ex failed");
+		throw std::runtime_error("EVP_DigestFinal_ex failed");
+	}
+
+	EVP_MD_CTX_free(ctx);
+	return digest;
 }
 
 #endif

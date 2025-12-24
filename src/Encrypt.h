@@ -266,6 +266,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(SimpleCrypt::CryptoFlags)
 #else
 #include <string>
 #include <vector>
+// #include <openssl/evp.h>
 
 using namespace std;
 #endif
@@ -328,4 +329,7 @@ Return 0 if SUCCESS, != 0 if fails
 
 	static string binaryToBase64(const unsigned char *buffer, int length);
 	static vector<unsigned char> base64ToBinary(const string& b64);
+
+	// EVP_MAX_MD_SIZE = 64
+	static std::array<unsigned char, 64> md5(const string& input, unsigned int& outLen);
 };
