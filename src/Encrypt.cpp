@@ -1168,7 +1168,7 @@ long Encrypt::decrypt(const char *pCryptedBuffer, char *pDecryptedBuffer, unsign
 	return 0;
 }
 
-string Encrypt::encrypt(string stringToBeEncrypted)
+std::string Encrypt::encrypt(std::string stringToBeEncrypted)
 {
 
 	long lBufferCryptedLength = Encrypt::getCryptedBufferLength(stringToBeEncrypted.c_str());
@@ -1176,7 +1176,7 @@ string Encrypt::encrypt(string stringToBeEncrypted)
 	char *pBufferCrypted;
 	if ((pBufferCrypted = new char[lBufferCryptedLength + 1]) == nullptr)
 	{
-		throw runtime_error(string("new failed"));
+		throw std::runtime_error("new failed");
 	}
 
 	strcpy(pBufferCrypted, "");
@@ -1184,17 +1184,17 @@ string Encrypt::encrypt(string stringToBeEncrypted)
 	{
 		delete[] pBufferCrypted;
 
-		throw runtime_error(string("Encrypt::encrypt failed"));
+		throw std::runtime_error("Encrypt::encrypt failed");
 	}
 
-	string cryptedBuffer(pBufferCrypted);
+	std::string cryptedBuffer(pBufferCrypted);
 
 	delete[] pBufferCrypted;
 
 	return cryptedBuffer;
 }
 
-string Encrypt::decrypt(string stringToBeDecrypted)
+std::string Encrypt::decrypt(std::string stringToBeDecrypted)
 {
 
 	char *pDecryptedBuffer;
@@ -1204,7 +1204,7 @@ string Encrypt::decrypt(string stringToBeDecrypted)
 
 	if ((pDecryptedBuffer = new char[lDecryptedBufferLength + 1]) == nullptr)
 	{
-		throw runtime_error(string("new failed"));
+		throw std::runtime_error("new failed");
 	}
 
 	strcpy(pDecryptedBuffer, "");
@@ -1212,10 +1212,10 @@ string Encrypt::decrypt(string stringToBeDecrypted)
 	{
 		delete[] pDecryptedBuffer;
 
-		throw runtime_error(string("Encrypt::encrypt failed"));
+		throw std::runtime_error("Encrypt::encrypt failed");
 	}
 
-	string decryptedBuffer(pDecryptedBuffer);
+	std::string decryptedBuffer(pDecryptedBuffer);
 
 	delete[] pDecryptedBuffer;
 
@@ -1272,7 +1272,7 @@ int main (void)
 }
 */
 
-string Encrypt::opensslEncrypt(string plaintext)
+std::string Encrypt::opensslEncrypt(std::string plaintext)
 {
 	// A 256 bit key
 	// unsigned char *key = (unsigned char *)"01234567890123456789012345678901";
@@ -1285,7 +1285,7 @@ string Encrypt::opensslEncrypt(string plaintext)
 	return Encrypt::opensslEncrypt(key, iv, plaintext);
 }
 
-string Encrypt::opensslEncrypt(unsigned char *key, unsigned char *iv, string plaintext)
+std::string Encrypt::opensslEncrypt(unsigned char *key, unsigned char *iv, std::string plaintext)
 {
 	// Buffer for ciphertext. Ensure the buffer is long enough for the
 	// ciphertext which may be longer than the plaintext, depending on the
@@ -1306,7 +1306,7 @@ string Encrypt::opensslEncrypt(unsigned char *key, unsigned char *iv, string pla
 		{
 			free(ucPlaintext);
 
-			throw runtime_error(string("EVP_CIPHER_CTX_new failed"));
+			throw std::runtime_error("EVP_CIPHER_CTX_new failed");
 		}
 
 		/*
@@ -1321,7 +1321,7 @@ string Encrypt::opensslEncrypt(unsigned char *key, unsigned char *iv, string pla
 			free(ucPlaintext);
 			EVP_CIPHER_CTX_free(ctx);
 
-			throw runtime_error(string("EVP_EncryptInit_ex failed"));
+			throw std::runtime_error("EVP_EncryptInit_ex failed");
 		}
 
 		/*
@@ -1333,7 +1333,7 @@ string Encrypt::opensslEncrypt(unsigned char *key, unsigned char *iv, string pla
 			free(ucPlaintext);
 			EVP_CIPHER_CTX_free(ctx);
 
-			throw runtime_error(string("EVP_EncryptUpdate failed"));
+			throw std::runtime_error("EVP_EncryptUpdate failed");
 		}
 		ciphertext_len = len;
 
@@ -1346,7 +1346,7 @@ string Encrypt::opensslEncrypt(unsigned char *key, unsigned char *iv, string pla
 			free(ucPlaintext);
 			EVP_CIPHER_CTX_free(ctx);
 
-			throw runtime_error(string("EVP_EncryptFinal_ex failed"));
+			throw std::runtime_error("EVP_EncryptFinal_ex failed");
 		}
 		ciphertext_len += len;
 
@@ -1359,7 +1359,7 @@ string Encrypt::opensslEncrypt(unsigned char *key, unsigned char *iv, string pla
 	// std::cout << "ciphertext_len: " << ciphertext_len << std::endl;
 	// for(int index =  0; index < ciphertext_len; index++)
 	// 	std::cout << "'" << ciphertext[index] << "'" << (int) (ciphertext[index]) << std::endl;
-	string base64Encoded = binaryToBase64(ciphertext, ciphertext_len);
+	std::string base64Encoded = binaryToBase64(ciphertext, ciphertext_len);
 	// std::cout << "base64Encoded.size: " << base64Encoded.size() << std::endl;
 	// for(int index =  0; index < base64Encoded.size(); index++)
 	// 	std::cout << "'" << base64Encoded[index] << "'" << (int) (base64Encoded[index]) << std::endl;
@@ -1368,14 +1368,14 @@ string Encrypt::opensslEncrypt(unsigned char *key, unsigned char *iv, string pla
 	// that could create issues: + and /
 	// Also the '=' character is used as padding
 	// For this reasons we wil just replace them
-	::replace(base64Encoded.begin(), base64Encoded.end(), '+', '-');
-	::replace(base64Encoded.begin(), base64Encoded.end(), '/', '~');
-	::replace(base64Encoded.begin(), base64Encoded.end(), '=', '_');
+	::std::replace(base64Encoded.begin(), base64Encoded.end(), '+', '-');
+	::std::replace(base64Encoded.begin(), base64Encoded.end(), '/', '~');
+	::std::replace(base64Encoded.begin(), base64Encoded.end(), '=', '_');
 
 	return base64Encoded;
 }
 
-string Encrypt::opensslDecrypt(string base64Encoded)
+std::string Encrypt::opensslDecrypt(std::string base64Encoded)
 {
 	// A 256 bit key
 	// unsigned char *key = (unsigned char *)"01234567890123456789012345678901";
@@ -1388,16 +1388,16 @@ string Encrypt::opensslDecrypt(string base64Encoded)
 	return Encrypt::opensslDecrypt(key, iv, base64Encoded);
 }
 
-string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, string base64Encoded)
+std::string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, std::string base64Encoded)
 {
 	// std::cout << "base64Encoded.size: " << base64Encoded.size() << std::endl;
 
-	string localBase64Encoded = base64Encoded;
-	::replace(localBase64Encoded.begin(), localBase64Encoded.end(), '-', '+');
-	::replace(localBase64Encoded.begin(), localBase64Encoded.end(), '~', '/');
-	::replace(localBase64Encoded.begin(), localBase64Encoded.end(), '_', '=');
+	std::string localBase64Encoded = base64Encoded;
+	::std::replace(localBase64Encoded.begin(), localBase64Encoded.end(), '-', '+');
+	::std::replace(localBase64Encoded.begin(), localBase64Encoded.end(), '~', '/');
+	::std::replace(localBase64Encoded.begin(), localBase64Encoded.end(), '_', '=');
 
-	vector<unsigned char> ciphertext = base64ToBinary(localBase64Encoded);
+	std::vector<unsigned char> ciphertext = base64ToBinary(localBase64Encoded);
 	// std::cout << "ciphertext_len: " << ciphertext_len << std::endl;
 
 	unsigned char ucPlaintext[10240];
@@ -1411,7 +1411,7 @@ string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, string bas
 		if (!((ctx = EVP_CIPHER_CTX_new())))
 		{
 			SPDLOG_ERROR("EVP_CIPHER_CTX_new failed");
-			throw runtime_error(string("EVP_CIPHER_CTX_new failed"));
+			throw std::runtime_error("EVP_CIPHER_CTX_new failed");
 		}
 
 		/*
@@ -1426,7 +1426,7 @@ string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, string bas
 			EVP_CIPHER_CTX_free(ctx);
 
 			SPDLOG_ERROR("EVP_DecryptInit_ex failed");
-			throw runtime_error(string("EVP_DecryptInit_ex failed"));
+			throw std::runtime_error("EVP_DecryptInit_ex failed");
 		}
 
 		/*
@@ -1438,7 +1438,7 @@ string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, string bas
 			EVP_CIPHER_CTX_free(ctx);
 
 			SPDLOG_ERROR("EVP_DecryptUpdate failed");
-			throw runtime_error(string("EVP_DecryptUpdate failed"));
+			throw std::runtime_error("EVP_DecryptUpdate failed");
 		}
 		plaintext_len = len;
 
@@ -1451,7 +1451,7 @@ string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, string bas
 			EVP_CIPHER_CTX_free(ctx);
 
 			SPDLOG_ERROR("EVP_DecryptFinal_ex failed");
-			throw runtime_error(string("EVP_DecryptFinal_ex failed"));
+			throw std::runtime_error("EVP_DecryptFinal_ex failed");
 		}
 		plaintext_len += len;
 
@@ -1459,12 +1459,12 @@ string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, string bas
 		EVP_CIPHER_CTX_free(ctx);
 	}
 
-	string plainText(reinterpret_cast<const char *>(ucPlaintext), plaintext_len);
+	std::string plainText(reinterpret_cast<const char *>(ucPlaintext), plaintext_len);
 
 	return plainText;
 }
 
-string Encrypt::binaryToBase64(const unsigned char *buffer, const int length)
+std::string Encrypt::binaryToBase64(const unsigned char *buffer, const int length)
 {
 	// Encodes a binary safe base 64 string
 
@@ -1521,7 +1521,7 @@ string Encrypt::binaryToBase64(const unsigned char *buffer, const int length)
 	// Documentazione OpenSSL: The BUF_MEM structure is owned by the BIO and must not be freed by the caller
 	BUF_MEM *bufferPtr;
 	BIO_get_mem_ptr(bmem, &bufferPtr);
-	string base64Encoded(bufferPtr->data, bufferPtr->length);
+	std::string base64Encoded(bufferPtr->data, bufferPtr->length);
 
 	// Libera:
 	// il BIO top
@@ -1560,7 +1560,7 @@ int Encrypt::convertFromBase64ToBinary(const char *b64message, unsigned char **b
 	return (0); // success
 }
 */
-vector<unsigned char> Encrypt::base64ToBinary(const string& b64)
+std::vector<unsigned char> Encrypt::base64ToBinary(const std::string& b64)
 {
 	// Decodes a base64 encoded string
 
@@ -1572,7 +1572,7 @@ vector<unsigned char> Encrypt::base64ToBinary(const string& b64)
 	BIO_set_flags(b64bio, BIO_FLAGS_BASE64_NO_NL);
 	BIO_push(b64bio, bmem);
 
-	vector<unsigned char> out((b64.size() * 3) / 4);
+	std::vector<unsigned char> out((b64.size() * 3) / 4);
 
 	const int len = BIO_read(b64bio, out.data(), out.size());
 	if (len <= 0)
@@ -1588,7 +1588,7 @@ vector<unsigned char> Encrypt::base64ToBinary(const string& b64)
 	return out;
 }
 
-vector<unsigned char> Encrypt::md5(const string& input, unsigned int& outLen)
+std::vector<unsigned char> Encrypt::md5(const std::string& input, unsigned int& outLen)
 {
 	EVP_MD_CTX* ctx = EVP_MD_CTX_new();
 	if (!ctx)
@@ -1609,7 +1609,7 @@ vector<unsigned char> Encrypt::md5(const string& input, unsigned int& outLen)
 	outLen = EVP_MD_size(md);
 	// outLen = EVP_MD_size(EVP_md5());  // MD5 = 16 bytes
 
-	vector<unsigned char> digest(EVP_MAX_MD_SIZE);
+	std::vector<unsigned char> digest(EVP_MAX_MD_SIZE);
 
 	if (EVP_DigestFinal_ex(ctx, digest.data(), &outLen) != 1)
 	{

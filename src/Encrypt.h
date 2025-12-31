@@ -268,7 +268,6 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(SimpleCrypt::CryptoFlags)
 #include <vector>
 // #include <openssl/evp.h>
 
-using namespace std;
 #endif
 
 class Encrypt
@@ -278,12 +277,12 @@ class Encrypt
 	/*
 	 * C++11 method encapsulating all the stuff to encrypt
 	 */
-	static string encrypt(string stringToBeEncrypted);
+	static std::string encrypt(std::string stringToBeEncrypted);
 
 	/*
 	 * C++11 method encapsulating all the stuff to decrypt
 	 */
-	static string decrypt(string stringToBeDecrypted);
+	static std::string decrypt(std::string stringToBeDecrypted);
 
 	/**
 crypta un buffer di una qualsiasi lunghezza
@@ -319,16 +318,16 @@ Return 0 if SUCCESS, != 0 if fails
 	*/
 	static long getCryptedBufferLength(const char *pBufferToEncrypt);
 
-	static string opensslEncrypt(string plaintext);
+	static std::string opensslEncrypt(std::string plaintext);
 
-	static string opensslEncrypt(unsigned char *key, unsigned char *iv, string plaintext);
+	static std::string opensslEncrypt(unsigned char *key, unsigned char *iv, std::string plaintext);
 
-	static string opensslDecrypt(string base64Encoded);
+	static std::string opensslDecrypt(std::string base64Encoded);
 
-	static string opensslDecrypt(unsigned char *key, unsigned char *iv, string base64Encoded);
+	static std::string opensslDecrypt(unsigned char *key, unsigned char *iv, std::string base64Encoded);
 
-	static string binaryToBase64(const unsigned char *buffer, int length);
-	static vector<unsigned char> base64ToBinary(const string& b64);
+	static std::string binaryToBase64(const unsigned char *buffer, int length);
+	static std::vector<unsigned char> base64ToBinary(const std::string& b64);
 
-	static vector<unsigned char> md5(const string& input, unsigned int& outLen);
+	static std::vector<unsigned char> md5(const std::string& input, unsigned int& outLen);
 };
