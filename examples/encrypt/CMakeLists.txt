@@ -34,3 +34,4 @@ add_executable(encrypt ${SOURCES} ${HEADERS})
 target_link_libraries (encrypt Encrypt)
 target_link_libraries(encrypt crypto)
 
+install(TARGETS encrypt DESTINATION bin)

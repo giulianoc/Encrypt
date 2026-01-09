@@ -39,6 +39,8 @@ set(Encrypt_VERSION_MAJOR 1)
 set(Encrypt_VERSION_MINOR 0)
 
 add_subdirectory(src)
-add_subdirectory(examples/encrypt)
-add_subdirectory(examples/decrypt)
+if(ENCRYPT_EXAMPLES)
+    add_subdirectory(examples/encrypt)
+    add_subdirectory(examples/decrypt)
+endif()
 
