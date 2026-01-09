@@ -33,5 +33,3 @@ add_executable(decrypt ${SOURCES} ${HEADERS})
 
 target_link_libraries (decrypt Encrypt)
 target_link_libraries(decrypt crypto)
-
-install(TARGETS decrypt DESTINATION bin)
