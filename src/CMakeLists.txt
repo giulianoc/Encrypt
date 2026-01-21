@@ -29,17 +29,20 @@ SET (HEADERS
 )
 
 include_directories("${SPDLOG_INCLUDE_DIR}")
+include_directories("${THREADLOGGER_INCLUDE_DIR}")
 if(APPLE)
   include_directories("${OPENSSL_INCLUDE_DIR}")
 endif()
 
 if(APPLE)
-  link_directories("${OPENSSL_LIB_DIR}")
+    link_directories("${THREADLOGGER_LIB_DIR}")
+    link_directories("${OPENSSL_LIB_DIR}")
 endif()
 
 add_library (Encrypt SHARED ${SOURCES} ${HEADERS})
 
 if(APPLE)
+    target_link_libraries(Encrypt ThreadLogger)
     target_link_libraries(Encrypt crypto)
 endif()
 

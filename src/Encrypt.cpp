@@ -1094,7 +1094,7 @@ long Encrypt::decrypt(const char *pCryptedBuffer, char *pDecryptedBuffer, unsign
 
 #include <iostream>
 #include <stdexcept>
-#include <spdlog/spdlog.h>
+#include "ThreadLogger.h"
 
 #include <openssl/conf.h>
 #include <openssl/err.h>
@@ -1410,7 +1410,7 @@ std::string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, std::
 		/* Create and initialise the context */
 		if (!((ctx = EVP_CIPHER_CTX_new())))
 		{
-			SPDLOG_ERROR("EVP_CIPHER_CTX_new failed");
+			LOG_ERROR("EVP_CIPHER_CTX_new failed");
 			throw std::runtime_error("EVP_CIPHER_CTX_new failed");
 		}
 
@@ -1425,7 +1425,7 @@ std::string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, std::
 		{
 			EVP_CIPHER_CTX_free(ctx);
 
-			SPDLOG_ERROR("EVP_DecryptInit_ex failed");
+			LOG_ERROR("EVP_DecryptInit_ex failed");
 			throw std::runtime_error("EVP_DecryptInit_ex failed");
 		}
 
@@ -1437,7 +1437,7 @@ std::string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, std::
 		{
 			EVP_CIPHER_CTX_free(ctx);
 
-			SPDLOG_ERROR("EVP_DecryptUpdate failed");
+			LOG_ERROR("EVP_DecryptUpdate failed");
 			throw std::runtime_error("EVP_DecryptUpdate failed");
 		}
 		plaintext_len = len;
@@ -1450,7 +1450,7 @@ std::string Encrypt::opensslDecrypt(unsigned char *key, unsigned char *iv, std::
 		{
 			EVP_CIPHER_CTX_free(ctx);
 
-			SPDLOG_ERROR("EVP_DecryptFinal_ex failed");
+			LOG_ERROR("EVP_DecryptFinal_ex failed");
 			throw std::runtime_error("EVP_DecryptFinal_ex failed");
 		}
 		plaintext_len += len;
@@ -1578,7 +1578,7 @@ std::vector<unsigned char> Encrypt::base64ToBinary(const std::string& b64)
 	if (len <= 0)
 	{
 		BIO_free_all(b64bio);
-		SPDLOG_ERROR("Base64 decode failed");
+		LOG_ERROR("Base64 decode failed");
 		throw std::runtime_error("Base64 decode failed");
 	}
 
@@ -1593,7 +1593,7 @@ std::vector<unsigned char> Encrypt::md5(const std::string& input, unsigned int& 
 	EVP_MD_CTX* ctx = EVP_MD_CTX_new();
 	if (!ctx)
 	{
-		SPDLOG_ERROR("EVP_MD_CTX_new failed");
+		LOG_ERROR("EVP_MD_CTX_new failed");
 		throw std::runtime_error("EVP_MD_CTX_new failed");
 	}
 
@@ -1601,7 +1601,7 @@ std::vector<unsigned char> Encrypt::md5(const std::string& input, unsigned int& 
 		EVP_DigestUpdate(ctx, input.data(), input.size()) != 1)
 	{
 		EVP_MD_CTX_free(ctx);
-		SPDLOG_ERROR("EVP_Digest failed");
+		LOG_ERROR("EVP_Digest failed");
 		throw std::runtime_error("EVP_Digest failed");
 	}
 
@@ -1614,7 +1614,7 @@ std::vector<unsigned char> Encrypt::md5(const std::string& input, unsigned int& 
 	if (EVP_DigestFinal_ex(ctx, digest.data(), &outLen) != 1)
 	{
 		EVP_MD_CTX_free(ctx);
-		SPDLOG_ERROR("EVP_DigestFinal_ex failed");
+		LOG_ERROR("EVP_DigestFinal_ex failed");
 		throw std::runtime_error("EVP_DigestFinal_ex failed");
 	}
 
