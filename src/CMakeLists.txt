@@ -47,5 +47,6 @@ if(APPLE)
 endif()
 
 install (TARGETS Encrypt DESTINATION lib)
-install (FILES ${HEADERS} DESTINATION include)
-
+if(NOT DEFINED ENCRYPT_INSTALL_HEADERS OR ENCRYPT_INSTALL_HEADERS)
+    install(FILES ${HEADERS} DESTINATION include)
+endif()
